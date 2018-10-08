@@ -3,6 +3,8 @@ from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
 from validate_email import validate_email
+from apiclient import errors
+
 # If modifying these scopes, delete the file token.json.
 SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
 
@@ -34,7 +36,15 @@ def main():
     print("Keeping messages that have these terms or addresses:\n")
     for each in keepKeywordsAndUsers:
         print(each)
-
+    setOfMessageIDsToDelete = set()
+    setOfMessageIDsToKeep = set()
+    for keyword in deleteKeywordsAndUsers:
+        setOfMessageIDsToDelete |= setOfMessagesMatchingQuery(service, "me", keyword)
+    for keyword in keepKeywordsAndUsers:
+        setOfMessageIDsToKeep |= setOfMessagesMatchingQuery(service, "me", keyword)
+    setOfMessageIDsToDelete -= setOfMessageIDsToKeep
+    for msg in setOfMessageIDsToDelete:
+        print(msg)
 
 #####################################################################################
         
@@ -82,6 +92,31 @@ def collectKeepKeywordsAndUsers():
             else: 
                 print("Invalid email format. Try again.\n")
     return setOfKeywordsAndUsers
+########################################################################################
+def setOfMessagesMatchingQuery(service, user_id, query=''):
+    try:
+        response = service.users().messages().list(userId=user_id,
+                                               q=query).execute()
+        messages = []
+        messageIDSet = set()
+        if 'messages' in response:
+            messages.extend(response['messages'])
+
+        while 'nextPageToken' in response:
+            page_token = response['nextPageToken']
+            response = service.users().messages().list(userId=user_id, q=query,
+                                             pageToken=page_token).execute()
+            messages.extend(response['messages'])
+
+#        return set(messages)
+#        print(messages)
+        for each in messages:
+            messageIDSet.add(each['id'])
+        return messageIDSet    
+    except errors.HttpError, error:
+            print( 'An error occurred: '+ error + "\n\n")
+
+########################################################################################
 
 if __name__ == '__main__':
         main()
