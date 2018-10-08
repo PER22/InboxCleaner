@@ -25,6 +25,19 @@ def main():
                 for label in labels:
                         print(label['name'])
     deleteKeywordsAndUsers = collectDeleteKeywordsAndUsers()
+    keepKeywordsAndUsers = collectKeepKeywordsAndUsers()
+    deleteKeywordsAndUsers -= keepKeywordsAndUsers
+    print('\033c')
+    print("Deletion keywords and addresses:\n")
+    for each in deleteKeywordsAndUsers:
+        print(each )
+    print("Keeping messages that have these terms or addresses:\n")
+    for each in keepKeywordsAndUsers:
+        print(each)
+
+
+#####################################################################################
+        
 
 def collectDeleteKeywordsAndUsers():
     setOfKeywordsAndUsers = set()
@@ -36,7 +49,7 @@ def collectDeleteKeywordsAndUsers():
     userInput = ""
     print("\n\n")
     while userInput != "q!":
-        userInput = raw_input("Enter any email addresses you don't want ANYTHING deleted from:\n")
+        userInput = raw_input("Enter any email addresses you want EVERYTHING deleted from:\n")
         if userInput != "q!":
             if validate_email(userInput):
                 setOfKeywordsAndUsers.add("from:" + userInput)
@@ -45,10 +58,30 @@ def collectDeleteKeywordsAndUsers():
 
     print("\n\n")
 
-    for item in setOfKeywordsAndUsers:
-        print(item)
+   # for item in setOfKeywordsAndUsers:
+    #    print(item)
     return setOfKeywordsAndUsers
 
+######################################################################################
+
+
+def collectKeepKeywordsAndUsers():
+    setOfKeywordsAndUsers = set()
+    userInput = ""
+    while userInput != "q!":
+        userInput = raw_input("Enter a keyword to NOT delete (eg 'Order' or 'Invoice')\n")
+        if userInput != "q!":
+            setOfKeywordsAndUsers.add(userInput)
+    userInput = ""
+    print("\n\n")
+    while userInput != "q!":
+        userInput = raw_input("Enter an email address to NOT delete messages from (eg Grandma@gmail.com)\n")
+        if userInput != "q!":
+            if validate_email(userInput):
+                setOfKeywordsAndUsers.add("from:" + userInput)
+            else: 
+                print("Invalid email format. Try again.\n")
+    return setOfKeywordsAndUsers
 
 if __name__ == '__main__':
         main()
