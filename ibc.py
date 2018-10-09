@@ -16,39 +16,61 @@ def main():
         flow = client.flow_from_clientsecrets('credentials.json', SCOPES)
         creds = tools.run_flow(flow, store)
     service = build('gmail', 'v1', http=creds.authorize(Http()))
-    #Move keyword storage variables up here
+    #end of Google's code
 
+    deleteKeywordsAndUsers = set()
+    keepKeywordsAndUsers = set()
     #Ask to load from delete kywds file
-    #check file extensions, if ok, load the values into the delete kywds set
-    #print delete kywds set
-    #ask if you want to remove any?, if yes, indicate which and ask again
+    user_input = ""
+    filename = ""
+    while (user_input != "yes") and (user_input != "no"):
+        if user_input != "":
+            print("Invalid response. Try again. \n\n")
+        user_input = raw_input("Do you want to load delete keywords from the file?\nType y or n: ")
+    
+    if user_input == "yes":
+       
+        #Get file name and verify.
+        filename = raw_input("Enter the name of your file. Delete Files should end in .dltkeys")
+       
+       #check file extensions, if ok, load the values into the delete kywds set
+        if filename.lower().endswith(".dltkeys"):
+            file = open(filename,"r")
+            for line in file:
+                deleteKeywordsAndUsers.add(line)
 
+        #print delete kywds set
+        for keywd in deleteKeywordsAndUsers:
+            print(keywd)
+            
+        #ask if you want to remove any?, if yes, indicate which, remove, redisplay, and ask again
+        
     #ask to load from preserve kywds file
-    #check extensions, if ok load values into preserve kywds set
-    #print preserve keywds set
-    #ask if you want to remove any, if yes indicate which and ask again
+        #check extensions, if ok load values into preserve kywds set
+        #print preserve keywds set
+        #ask if you want to remove any, if yes indicate which and ask again
 
     #remove all preserve kywds from the list of delete kywds, in place so no accidents happen
-
-    
-    
+    deleteKeywordsAndUsers -= keepKeywordsAndUsers
 
     #Collect new keywords from user
-    deleteKeywordsAndUsers = collectDeleteKeywordsAndUsers()
-    keepKeywordsAndUsers = collectKeepKeywordsAndUsers()
+    deleteKeywordsAndUsers |= collectDeleteKeywordsAndUsers()
+    keepKeywordsAndUsers |= collectKeepKeywordsAndUsers()
+    
     #remove any mistakes in the safest way possible
     deleteKeywordsAndUsers -= keepKeywordsAndUsers
+    
     #clear screen and output the lists thus far
     print('\033c')
     print("Deletion keywords and addresses:\n")
     for each in deleteKeywordsAndUsers:
         print(each )
-    print("Keeping messages that have these terms or addresses:\n")
+    print("\n\nKeeping messages that have these terms or addresses:\n\n")
     for each in keepKeywordsAndUsers:
         print(each)
 
     #Ask if user would like to save either file with the added terms
-    #if so, save by overwiting, and put the whole list back in.
+        #if so, save by overwiting, and put the whole list back in.
     
     #Begin Collecting the Message IDs to delete via API call    
     setOfMessageIDsToDelete = set()
