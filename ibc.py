@@ -6,7 +6,7 @@ from validate_email import validate_email
 from apiclient import errors
 
 # If modifying these scopes, delete the file token.json.
-SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
+SCOPES = 'https://www.googleapis.com/auth/gmail.modify'
 
 def main():
     store = file.Storage('token.json')
@@ -33,18 +33,29 @@ def main():
     for keyword in keepKeywordsAndUsers:
         setOfMessageIDsToKeep |= setOfMessagesMatchingQuery(service, "me", keyword)
     setOfMessageIDsToDelete -= setOfMessageIDsToKeep
-    i = 1
+    i = 0
     for msg in setOfMessageIDsToDelete:
-        print(str(i) + ". "+ str(msg))
-        i+=1 
+        i+=1
+        print(str(i) + ". "+ str(msg)) 
     user_accept = ""
-    while user_accept != "DELETE" or user_accept != "CANCEL":
+    while (user_accept != "DELETE") and (user_accept != "CANCEL"):
         if user_accept != "":
-            print("Invalid response. Try again.")
-        user_accept = raw_input("You are about to delete " + str(i - 1) + " messages.\n This could be a large inconvenience if you've made a mistake.\nType DELETE to continue or CANCEL to cancel: ")
+            print("\n\nInvalid response. Try again.")
+        user_accept = raw_input("You are about to delete " + str(i ) + " messages.\n This could be a large inconvenience if you've made a mistake.\nType DELETE to continue or CANCEL to cancel: ")
+
     if user_accept == "DELETE":
         #Do a thing to delete them
-        fakeVariable=1
+        j = 0
+        for each in setOfMessageIDsToDelete:
+            print('\033c')
+            try:
+                service.users().messages().trash(id=each, userId="me").execute()
+                j+=1
+                print("Deleted " + str(j)+ " / " + str(i) + "messages.\n" + str((i/j)*100) + "% complete.")
+
+
+            except errors.HttpError, error:
+                print("An error occured: "+ str(error))
     else: 
         quit()
 #####################################################################################
@@ -96,8 +107,7 @@ def collectKeepKeywordsAndUsers():
 ########################################################################################
 def setOfMessagesMatchingQuery(service, user_id, query=''):
     try:
-        response = service.users().messages().list(userId=user_id,
-                                               q=query).execute()
+        response = service.users().messages().list(userId=user_id,q=query).execute()
         messages = []
         messageIDSet = set()
         if 'messages' in response:
