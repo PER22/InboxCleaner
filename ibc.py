@@ -16,16 +16,6 @@ def main():
         creds = tools.run_flow(flow, store)
     service = build('gmail', 'v1', http=creds.authorize(Http()))
 
-    # Call the Gmail API
-    results = service.users().labels().list(userId='me').execute()
-    labels = results.get('labels', [])
-
-    if not labels:
-                print('No labels found.')
-    else:
-                print('Labels:')
-                for label in labels:
-                        print(label['name'])
     deleteKeywordsAndUsers = collectDeleteKeywordsAndUsers()
     keepKeywordsAndUsers = collectKeepKeywordsAndUsers()
     deleteKeywordsAndUsers -= keepKeywordsAndUsers
@@ -43,9 +33,20 @@ def main():
     for keyword in keepKeywordsAndUsers:
         setOfMessageIDsToKeep |= setOfMessagesMatchingQuery(service, "me", keyword)
     setOfMessageIDsToDelete -= setOfMessageIDsToKeep
+    i = 1
     for msg in setOfMessageIDsToDelete:
-        print(msg)
-
+        print(str(i) + ". "+ str(msg))
+        i+=1 
+    user_accept = ""
+    while user_accept != "DELETE" or user_accept != "CANCEL":
+        if user_accept != "":
+            print("Invalid response. Try again.")
+        user_accept = raw_input("You are about to delete " + str(i - 1) + " messages.\n This could be a large inconvenience if you've made a mistake.\nType DELETE to continue or CANCEL to cancel: ")
+    if user_accept == "DELETE":
+        #Do a thing to delete them
+        fakeVariable=1
+    else: 
+        quit()
 #####################################################################################
         
 
