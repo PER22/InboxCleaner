@@ -9,16 +9,36 @@ from apiclient import errors
 SCOPES = 'https://www.googleapis.com/auth/gmail.modify'
 
 def main():
+    #Google's OAuth2 code
     store = file.Storage('token.json')
     creds = store.get()
     if not creds or creds.invalid:
         flow = client.flow_from_clientsecrets('credentials.json', SCOPES)
         creds = tools.run_flow(flow, store)
     service = build('gmail', 'v1', http=creds.authorize(Http()))
+    #Move keyword storage variables up here
 
+    #Ask to load from delete kywds file
+    #check file extensions, if ok, load the values into the delete kywds set
+    #print delete kywds set
+    #ask if you want to remove any?, if yes, indicate which and ask again
+
+    #ask to load from preserve kywds file
+    #check extensions, if ok load values into preserve kywds set
+    #print preserve keywds set
+    #ask if you want to remove any, if yes indicate which and ask again
+
+    #remove all preserve kywds from the list of delete kywds, in place so no accidents happen
+
+    
+    
+
+    #Collect new keywords from user
     deleteKeywordsAndUsers = collectDeleteKeywordsAndUsers()
     keepKeywordsAndUsers = collectKeepKeywordsAndUsers()
+    #remove any mistakes in the safest way possible
     deleteKeywordsAndUsers -= keepKeywordsAndUsers
+    #clear screen and output the lists thus far
     print('\033c')
     print("Deletion keywords and addresses:\n")
     for each in deleteKeywordsAndUsers:
@@ -26,17 +46,28 @@ def main():
     print("Keeping messages that have these terms or addresses:\n")
     for each in keepKeywordsAndUsers:
         print(each)
+
+    #Ask if user would like to save either file with the added terms
+    #if so, save by overwiting, and put the whole list back in.
+    
+    #Begin Collecting the Message IDs to delete via API call    
     setOfMessageIDsToDelete = set()
     setOfMessageIDsToKeep = set()
+    #Collect all deleteable Message IDs
     for keyword in deleteKeywordsAndUsers:
         setOfMessageIDsToDelete |= setOfMessagesMatchingQuery(service, "me", keyword)
+    #Collect all preservable Message IDs    
     for keyword in keepKeywordsAndUsers:
         setOfMessageIDsToKeep |= setOfMessagesMatchingQuery(service, "me", keyword)
+    #Remove any duplicates in safest way possible
     setOfMessageIDsToDelete -= setOfMessageIDsToKeep
+    #declare a variable to count them and make a readable output
     i = 0
     for msg in setOfMessageIDsToDelete:
         i+=1
         print(str(i) + ". "+ str(msg)) 
+
+    #Confirm And Warn User     
     user_accept = ""
     while (user_accept != "DELETE") and (user_accept != "CANCEL"):
         if user_accept != "":
