@@ -22,34 +22,97 @@ def main():
     keepKeywordsAndUsers = set()
     #Ask to load from delete kywds file
     user_input = ""
-    filename = ""
+    delete_filename = "default.dltkeys"
+    keep_filename = "default.kpkeys"
+    
     while (user_input != "yes") and (user_input != "no"):
         if user_input != "":
             print("Invalid response. Try again. \n\n")
-        user_input = raw_input("Do you want to load delete keywords from the file?\nType y or n: ")
+        user_input = raw_input("Do you want to load delete keywords from the file?\nType yes or no: ")
     
     if user_input == "yes":
        
         #Get file name and verify.
-        filename = raw_input("Enter the name of your file. Delete Files should end in .dltkeys")
+        delete_filename = raw_input("\nEnter the name of your file. Delete Files should end in .dltkeys:   ")
        
        #check file extensions, if ok, load the values into the delete kywds set
-        if filename.lower().endswith(".dltkeys"):
-            file = open(filename,"r")
-            for line in file:
-                deleteKeywordsAndUsers.add(line)
-
-        #print delete kywds set
-        for keywd in deleteKeywordsAndUsers:
-            print(keywd)
-            
+        if delete_filename.lower().endswith(".dltkeys"):
+            try:
+                filehandle = open(delete_filename,"r")
+                for line in filehandle:
+                    if (line != "") and (line != " ") and (line != "\n"):
+                        deleteKeywordsAndUsers.add(line)
+                filehandle.close()     
+            except IOError:
+                print("\nInvalid file.")
+        else:
+            print("\nInvalid file extension, be careful.")
         #ask if you want to remove any?, if yes, indicate which, remove, redisplay, and ask again
-        
-    #ask to load from preserve kywds file
-        #check extensions, if ok load values into preserve kywds set
-        #print preserve keywds set
-        #ask if you want to remove any, if yes indicate which and ask again
+        user_input = ""
+        while(user_input != "no"):
+            linecount = 0
+            #print delete kywds set
+            print("\033c")
+            for keywd in deleteKeywordsAndUsers:
+                linecount += 1
+                
+                print(keywd)
+            if linecount > 0:    
+                user_input = raw_input("These are the delete keywords. Do you want to remove any? no to continue, yes to select: ")
+                if user_input == "yes":
+                    user_input = raw_input("Which one?    ")
+                    if user_input in deleteKeywordsAndUsers:
+                        deleteKeywordsAndUsers.remove(user_input)
+                    else:
+                        print("Couldn't identify the term to delete.")
+            else: 
+                user_input = "no"
+            
+    user_input = ""   
+    while (user_input != "yes") and (user_input != "no"):
+        if user_input != "":
+            print("Invalid response. Try again. \n\n")
+        user_input = raw_input("Do you want to load preservation keywords from the file?\nType yes or no: ")
+    
+    if user_input == "yes":
+       
+        #Get file name and verify.
+        keep_filename = raw_input("\nEnter the name of your file. Keep key files should end in .kpkeys:   ")
+       
+       #check file extensions, if ok, load the values into the keep kywds set
+        if keep_filename.lower().endswith(".kpkeys"):
+            try:
+                filehandle = open(keep_filename,"r")
+                for line in filehandle:
+                    keepKeywordsAndUsers.add(line)
+                filehandle.close()     
+            except IOError:
+                print("\nInvalid file.")
+        else:
+            print("\nInvalid file extension, be careful.")
+        #ask if you want to remove any?, if yes, indicate which, remove, redisplay, and ask again
+        user_input = ""
+        while(user_input != "no"):
+            linecount = 0
+            #print keep kywds set
+            print("\033c")
+            for keywd in keepKeywordsAndUsers:
+                linecount += 1
+                print(keywd)
 
+            if linecount > 0:    
+                user_input = raw_input("These are the preservation keywords. Do you want to remove any? no to continue, yes to select: ")
+                if user_input == "yes":
+                    user_input = raw_input("Which one?   ")
+                    if user_input in keepKeywordsAndUsers:
+                        keepKeyWordsAndUsers.remove(user_input)
+                    else:
+                        print("Couldn't identify the term to delete.")
+            else: 
+                user_input = "no"
+            
+       
+        
     #remove all preserve kywds from the list of delete kywds, in place so no accidents happen
     deleteKeywordsAndUsers -= keepKeywordsAndUsers
 
@@ -102,7 +165,7 @@ def main():
         for each in setOfMessageIDsToDelete:
             print('\033c')
             try:
-                service.users().messages().trash(id=each, userId="me").execute()
+#CURRENTLY IN SAFE MODE                service.users().messages().trash(id=each, userId="me").execute()
                 j+=1
                 print("Deleted " + str(j)+ " / " + str(i) + "messages.\n" + str((i/j)*100) + "% complete.")
 
@@ -110,7 +173,28 @@ def main():
             except errors.HttpError, error:
                 print("An error occured: "+ str(error))
     else: 
-        quit()
+        print("Deletion Cancelled.")
+
+    
+    user_input = ""
+    user_input = raw_input("Do you want to save the changes you made to the delete keyword file? Type save, or any key to continue without saving.    ")
+    if user_input == "save":
+        filehandle = open(delete_filename,"w")
+        for keywd in deleteKeywordsAndUsers:
+            filehandle.write(keywd)
+            filehandle.write("\n")
+        filehandle.close()
+    user_input = ""
+    user_input = raw_input("Do you want to save the changes you made to the preserve keyword file? Type save, or any key to continue without saving.   ")
+    if user_input == "save":
+        filehandle = open(keep_filename,"w")
+        for keywd in keepKeywordsAndUsers:
+            filehandle.write(keywd)
+            filehandle.write("\n")
+        filehandle.close()
+
+
+
 #####################################################################################
         
 
