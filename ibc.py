@@ -7,7 +7,38 @@ from apiclient import errors
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = 'https://www.googleapis.com/auth/gmail.modify'
+###########################################################
+def loadFileToSet(sourceFile, fileExtension, descriptor): 
 
+    setOfKeys = set()
+   #check file extensions, if ok, load the values into the delete kywds set
+    if sourceFile.lower().endswith(fileExtension):
+        try:
+            filehandle = open(sourceFile,"r")
+            for line in filehandle:
+                if (line != "") and (line != " ") and (line != "\n"):
+                    setOfKeys.add(line)
+            filehandle.close()     
+        except IOError:
+            print("\nInvalid file. Proceeding without loading it. \n")
+    else:
+        print("\nInvalid file extension, be careful.\n")
+    #ask if you want to remove any?, if yes, indicate which, remove, redisplay, and ask again
+    user_input = ""
+    print("\033c")
+    while(user_input != "no") and (len(setOfKeys) > 0):
+        #print delete kywds set
+        for keywd in setOfKeys:
+            print(keywd)
+        user_input = raw_input("These are the " + str(descriptor) + " keywords. Do you want to remove any? no to continue, yes to select: ")
+        if user_input == "yes":
+            user_input = raw_input("Which one?    ")
+            if (str(user_input)+ "\n") in setOfKeys:
+                setOfKeys.remove(str(user_input) + "\n")
+            else:
+                print("Couldn't identify the term to delete.")
+    return setOfKeys        
+###########################################################
 def main():
     #Google's OAuth2 code
     store = file.Storage('token.json')
@@ -20,11 +51,11 @@ def main():
 
     deleteKeywordsAndUsers = set()
     keepKeywordsAndUsers = set()
-    #Ask to load from delete kywds file
     user_input = ""
     delete_filename = "default.dltkeys"
     keep_filename = "default.kpkeys"
     
+    #Ask to load from delete kywds file, should only be using delete* variables until otherwise stated.
     while (user_input != "yes") and (user_input != "no"):
         if user_input != "":
             print("Invalid response. Try again. \n\n")
@@ -34,40 +65,8 @@ def main():
        
         #Get file name and verify.
         delete_filename = raw_input("\nEnter the name of your file. Delete Files should end in .dltkeys:   ")
-       
-       #check file extensions, if ok, load the values into the delete kywds set
-        if delete_filename.lower().endswith(".dltkeys"):
-            try:
-                filehandle = open(delete_filename,"r")
-                for line in filehandle:
-                    if (line != "") and (line != " ") and (line != "\n"):
-                        deleteKeywordsAndUsers.add(line)
-                filehandle.close()     
-            except IOError:
-                print("\nInvalid file.")
-        else:
-            print("\nInvalid file extension, be careful.")
-        #ask if you want to remove any?, if yes, indicate which, remove, redisplay, and ask again
-        user_input = ""
-        while(user_input != "no"):
-            linecount = 0
-            #print delete kywds set
-            print("\033c")
-            for keywd in deleteKeywordsAndUsers:
-                linecount += 1
-                
-                print(keywd)
-            if linecount > 0:    
-                user_input = raw_input("These are the delete keywords. Do you want to remove any? no to continue, yes to select: ")
-                if user_input == "yes":
-                    user_input = raw_input("Which one?    ")
-                    if user_input in deleteKeywordsAndUsers:
-                        deleteKeywordsAndUsers.remove(user_input)
-                    else:
-                        print("Couldn't identify the term to delete.")
-            else: 
-                user_input = "no"
-            
+        deleteKeywordsAndUsers |= loadFileToSet(delete_filename, "dltkeys", "delete")
+    #Ask to load from preserve keywrods file, only use keep* variables until otherwise stated.  
     user_input = ""   
     while (user_input != "yes") and (user_input != "no"):
         if user_input != "":
@@ -75,41 +74,9 @@ def main():
         user_input = raw_input("Do you want to load preservation keywords from the file?\nType yes or no: ")
     
     if user_input == "yes":
-       
         #Get file name and verify.
         keep_filename = raw_input("\nEnter the name of your file. Keep key files should end in .kpkeys:   ")
-       
-       #check file extensions, if ok, load the values into the keep kywds set
-        if keep_filename.lower().endswith(".kpkeys"):
-            try:
-                filehandle = open(keep_filename,"r")
-                for line in filehandle:
-                    keepKeywordsAndUsers.add(line)
-                filehandle.close()     
-            except IOError:
-                print("\nInvalid file.")
-        else:
-            print("\nInvalid file extension, be careful.")
-        #ask if you want to remove any?, if yes, indicate which, remove, redisplay, and ask again
-        user_input = ""
-        while(user_input != "no"):
-            linecount = 0
-            #print keep kywds set
-            print("\033c")
-            for keywd in keepKeywordsAndUsers:
-                linecount += 1
-                print(keywd)
-
-            if linecount > 0:    
-                user_input = raw_input("These are the preservation keywords. Do you want to remove any? no to continue, yes to select: ")
-                if user_input == "yes":
-                    user_input = raw_input("Which one?   ")
-                    if user_input in keepKeywordsAndUsers:
-                        keepKeyWordsAndUsers.remove(user_input)
-                    else:
-                        print("Couldn't identify the term to delete.")
-            else: 
-                user_input = "no"
+        keepKeywordsAndUsers |= loadFileToSet(keep_filename, ".kpkeys", "preservation")
             
        
         
@@ -120,7 +87,7 @@ def main():
     deleteKeywordsAndUsers |= collectDeleteKeywordsAndUsers()
     keepKeywordsAndUsers |= collectKeepKeywordsAndUsers()
     
-    #remove any mistakes in the safest way possible
+    #remove any mistakes again in the safest way possible
     deleteKeywordsAndUsers -= keepKeywordsAndUsers
     
     #clear screen and output the lists thus far
@@ -132,8 +99,6 @@ def main():
     for each in keepKeywordsAndUsers:
         print(each)
 
-    #Ask if user would like to save either file with the added terms
-        #if so, save by overwiting, and put the whole list back in.
     
     #Begin Collecting the Message IDs to delete via API call    
     setOfMessageIDsToDelete = set()
@@ -144,7 +109,7 @@ def main():
     #Collect all preservable Message IDs    
     for keyword in keepKeywordsAndUsers:
         setOfMessageIDsToKeep |= setOfMessagesMatchingQuery(service, "me", keyword)
-    #Remove any duplicates in safest way possible
+    #Remove any messages that are in both in safest way possible
     setOfMessageIDsToDelete -= setOfMessageIDsToKeep
     #declare a variable to count them and make a readable output
     i = 0
@@ -160,18 +125,7 @@ def main():
         user_accept = raw_input("You are about to delete " + str(i ) + " messages.\n This could be a large inconvenience if you've made a mistake.\nType DELETE to continue or CANCEL to cancel: ")
 
     if user_accept == "DELETE":
-        #Do a thing to delete them
-        j = 0
-        for each in setOfMessageIDsToDelete:
-            print('\033c')
-            try:
-#CURRENTLY IN SAFE MODE                service.users().messages().trash(id=each, userId="me").execute()
-                j+=1
-                print("Deleted " + str(j)+ " / " + str(i) + "messages.\n" + str((i/j)*100) + "% complete.")
-
-
-            except errors.HttpError, error:
-                print("An error occured: "+ str(error))
+        deleteMessagesFromIDSet(setOfMessageIDsToDelete)
     else: 
         print("Deletion Cancelled.")
 
@@ -179,22 +133,35 @@ def main():
     user_input = ""
     user_input = raw_input("Do you want to save the changes you made to the delete keyword file? Type save, or any key to continue without saving.    ")
     if user_input == "save":
-        filehandle = open(delete_filename,"w")
-        for keywd in deleteKeywordsAndUsers:
-            filehandle.write(keywd)
-            filehandle.write("\n")
-        filehandle.close()
+        saveSetToFile(deleteKeywordsAndUsers, delete_filename)
+    
     user_input = ""
     user_input = raw_input("Do you want to save the changes you made to the preserve keyword file? Type save, or any key to continue without saving.   ")
     if user_input == "save":
-        filehandle = open(keep_filename,"w")
-        for keywd in keepKeywordsAndUsers:
-            filehandle.write(keywd)
-            filehandle.write("\n")
-        filehandle.close()
+        saveSetToFile(keepKeywordsAndUsers, keep_filename)
+#####################################################################################
+def deleteMessagesFromIDSet(setOfIDs):
+    j = 0
+    i = len(setOfIDs)
+    for each in setOfIDs:
+        print('\033c')
+        try:
+#CURRENTLY IN SAFE MODE                service.users().messages().trash(id=each, userId="me").execute()
+            j+=1
+            print("Deleted " + str(j)+ " / " + str(i) + "messages.\n" + str((i/j)*100) + "% complete.")
 
 
+        except errors.HttpError, error:
+            print("An error occured: "+ str(error))
 
+
+#####################################################################################
+
+def saveSetToFile(setToSave, fileToSaveIn):
+    filehandle = open(fileToSaveIn, "w")
+    for keywd in setToSave:
+        filehandle.write(keywd + "\n") 
+    filehandle.close()
 #####################################################################################
         
 
@@ -203,13 +170,14 @@ def collectDeleteKeywordsAndUsers():
     userInput = ""
     while userInput != "q!":
         userInput = raw_input("Enter a keyword to add to delete list, or type q! to exit\n")
-        if userInput != "q!":
+        if (userInput != "q!") and (userInput != "") and (userInput != " ") and (userInput != "\n") :
             setOfKeywordsAndUsers.add(userInput)
     userInput = ""
     print("\n\n")
     while userInput != "q!":
         userInput = raw_input("Enter any email addresses you want EVERYTHING deleted from:\n")
-        if userInput != "q!":
+        
+        if (userInput != "q!") and (userInput != "") and (userInput != " ") and (userInput != "\n") :
             if validate_email(userInput):
                 setOfKeywordsAndUsers.add("from:" + userInput)
             else: 
@@ -229,13 +197,15 @@ def collectKeepKeywordsAndUsers():
     userInput = ""
     while userInput != "q!":
         userInput = raw_input("Enter a keyword to NOT delete (eg 'Order' or 'Invoice')\n")
-        if userInput != "q!":
+        
+        if (userInput != "q!") and (userInput != "") and (userInput != " ") and (userInput != "\n") :
             setOfKeywordsAndUsers.add(userInput)
     userInput = ""
     print("\n\n")
     while userInput != "q!":
         userInput = raw_input("Enter an email address to NOT delete messages from (eg Grandma@gmail.com)\n")
-        if userInput != "q!":
+        
+        if (userInput != "q!") and (userInput != "") and (userInput != " ") and (userInput != "\n") :
             if validate_email(userInput):
                 setOfKeywordsAndUsers.add("from:" + userInput)
             else: 
