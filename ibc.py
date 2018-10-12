@@ -67,6 +67,8 @@ def main():
         delete_filename = raw_input("\nEnter the name of your file. Delete Files should end in .dltkeys:   ")
         deleteKeywordsAndUsers |= loadFileToSet(delete_filename, "dltkeys", "delete")
     #Ask to load from preserve keywrods file, only use keep* variables until otherwise stated.  
+    
+    #dont allow escape without valid input
     user_input = ""   
     while (user_input != "yes") and (user_input != "no"):
         if user_input != "":
@@ -129,12 +131,12 @@ def main():
     else: 
         print("Deletion Cancelled.")
 
-    
+    #ask about saving delete file
     user_input = ""
     user_input = raw_input("Do you want to save the changes you made to the delete keyword file? Type save, or any key to continue without saving.    ")
     if user_input == "save":
         saveSetToFile(deleteKeywordsAndUsers, delete_filename)
-    
+   #ask about saving preserve file
     user_input = ""
     user_input = raw_input("Do you want to save the changes you made to the preserve keyword file? Type save, or any key to continue without saving.   ")
     if user_input == "save":
