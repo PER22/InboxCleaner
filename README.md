@@ -7,9 +7,11 @@ As an overview, InboxCleaner will assemble a list of messages that contain match
 
 It needs the pip python package manager, googles authentication package, and python 2.7, as well as an active Gmail.com account. I will include a brief installation writeup below, but it is mostly copied from Googles own documentation.
 
-InboxCleaner will, in the future, read files in of keywords to delete, and keywords to preserve, and ask for new ones, before assembling a list of messages and asking to proceed. At the end of the session, they will be saved.
+InboxCleaner will read files in of keywords to delete, and keywords to preserve, and ask for new ones, before assembling a list of messages and asking to proceed. At the end of the session, they can be saved.
 
-For example, you could enter "CatFacts" to get rid of those pesky CatFacts messages that are sitting around your inbox. However, putting something in like "the" would have disastrous results.
+Usage:
+
+For example, you could enter "CatFacts" to get rid of those pesky CatFacts messages that are sitting around your inbox. However, putting something in like "the" would have disastrous results. Try to keep your search terms specific, and of course you can search the same terms in your GMail client to see what comes up. Some people have suggested seeing message previews, but that would make this a very verbose program to run. I may add a command line option to do that.
 
 It can also append the "from:" prefix to its terms if they are emails, to further specify which messages to delete. You might, for example, add "spammer@spam.com" to the list of emails to delete everything from, which would then be reformatted as "from:spammer@spam.com."
 
@@ -17,7 +19,7 @@ If you wanted to, for example, delete all the CatFacts that don't relate to your
 
 If you wanted to get rid of all those pesky CatFacts, but your grandmother happens to sometimes include a CatFact for you, you can add her email "Granny@email.com" to the preservation keyword list, and it would be reformatted to "from:Granny@email.com". In that case, the CatFacts emails NOT from your grandmother will be deleted.
 
-This is executed by using sets of message ID's and before user confirmation/deletion, the deletion set has the preservation set subtracted from it. No message ID that is in the PRESERVE list will be allowed to remain in the DELETE list.
+This is executed by using sets of message ID's. At several key points, the deletion set has the preservation set subtracted from it. No message ID that is in the PRESERVE list will be allowed to remain in the DELETE list.
 
 This represents only a few hours work and has relatively few safeguards, so it goes without saying that this is to be used at your own risk. I am writing this as a personal excercise and a tool that I will probably only use a few times, carefully.
 
